@@ -1,0 +1,118 @@
+Introduction:
+
+This is 'simlir', some python intended to help simulate the IANA->RIR->LIR
+address allocation system. It was written primarily by Niall Murphy
+(niallm@gmail.com and avernus.net) with some small contributions from Colm 
+MacCarthaigh (the colm found at stdlib.net).
+Helpful discussions were also had with Dave Wilson (dave.wilson@heanet.ie)
+and David Malone (dwmalone@maths.tcd.ie).
+
+I should have released this long ago, but due to various things (new job,
+second kid, etc etc) it has taken much, much longer than anticipated to get 
+it into a releasable state. Unfortunately, due to a lack of time (see under
+new job, second kid) it's not going to get as refined as I'd hoped, so
+it's time to let it go. The current state does not include much of the market 
+simulation framework I've previously spoken about, since that's still quite
+experimental (and likely to remain so, alas...) but does include the ability
+to create LIR, RIR and IANA objects with data read in from the publically
+available records, and can run a simple simulation to a conclusion. Or, to
+put it another way, it's still quite broken, but at least it runs.
+
+I very much hope that I can find someone passionate about address allocation
+and python with more time than I have to refine this and make it more useful.
+Until that time, I am officially just a patch reviewer. :-)
+
+Architecture:
+
+The code attempts to model the IANA->RIR->LIR model of address allocation.
+The simulation classes are responsible for initialising the overall system,
+by creating an object for the IANA, for each RIR found in the data files,
+and (due to limitations in the publically available data) creating an LIR
+per country, which may or may not be a statistically acceptable level of
+hokum. 
+
+Each LIR/RIR object has a behaviour object which determines how the object
+behaves when it comes to making and fulfilling addressing requests; several
+different kinds of behaviour are obviously possible, ranging from statically
+requesting the same amount of addresses every time the object is asked,
+through to trying to do some kind of "replay" of the previous history of
+requests. These behaviours can be selected at run-time, and are defined
+in the behaviour classes, while the LIRs and RIRs are defined in the lir
+class file.
+
+Useful underlying infrastructure is defined in the timeline and tree classes.
+Timeline is a mostly linked-list "timeline" object, used to deposit object
+reference callbacks in a staggered fashion (as befits discrete event
+simulation), whereas Tree is basically a slow Trie implementation, but does
+have the benefit of offering a few crucial methods I haven't found in others,
+such as "FindGap" - find me the first gap of size X in your tree. Taken
+together, this means that address holders and address suppliers can handle
+requests, deposit a quick "call me again in 30 days" event on the timeline,
+and efficiently find the first free /8 someone is asking for.
+
+Various other pieces of simulation behaviour are controlled in the constants
+file, which is mostly boring magic integer or pathname plumbing, while the 
+instrumentation classes are just written to have a hokey way of messaging
+events within the simulation. In theory this makes it easier to have a GUI
+interface.
+
+Caveats:
+
+* This is explicitly not intended to replace any other simulation, especially
+  Geoff's work. There's still a _lot_ of hokum in the program, and a _lot_ of
+  uncertainty in the real world. DO NOT BELIEVE ANY DATE THIS PROGRAM TELLS
+  YOU. (There - I've said it.) It's much more useful as a tool for modelling
+  and comparing results.
+* Years ago, when no-one quite knew what an IP address was, we allocated
+  blocks not aligned on power-of-two boundaries, and indeed, such entries are
+  in the data files if you look for them. I took the policy decision to regard
+  this as an error, so don't necessarily worry if the program tells you that
+  it couldn't add various prefixes. Obviously this would be a large source of
+  divergence from reality (see above).
+* tree.py isn't terrible from a performance point of view, but it sure would
+  be nice to have a C version. Same goes for timeline.py, for which I looked
+  at using other python types like "decks", but eventually decided that being
+  able to add objects at arbitary times was just too useful a feature.
+* You'll have to write your own behaviour module to do any meaningful
+  comparisons. Understanding what's going on is a significant barrier to doing
+  that, but reviewing the unit tests isn't a bad way to start.
+
+Or, to put it another way, it's still quite broken, but at least it runs.
+
+Contents:
+
+Top-level *.py = simulation 'executables'
+data/* = data used by the smulation or support scripts
+test/* = unit tests for the software
+
+update_data.py = script for updating data/* from the public registry data
+
+Installation Instructions:
+
+* Recent (2.4+) copy of python
+* You'll need IPy currently 
+  (although there is something faster out there we should
+  probably use).
+* Run update_data.py to populate your data directory with recent data
+
+How to invoke:
+
+./simulation.py will run a simple simulation, and --help will show you the
+other parameters.
+
+Future directions:
+
+Someone/people with more time than me should do the following:
+
+* Double check that everything actually works as expected by expanding the
+  unit tests and running more toy simulations.
+* Extend the system to support the notion of market trading by having a
+  behaviour object that "knows" when exhaustion has set in, and for objects
+  with a large amount of free space, become address suppliers for other
+  objects. Look at the fragmentation in unconstrained circumstances like that,
+  then constrain them and look again.
+* Write a GUI. Preferably with a big ticking clock.
+
+Thanks to:
+
+Léan, Oisín and Fiachra, for facilitating the time to get this out the door.
