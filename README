@@ -72,12 +72,11 @@ Caveats:
 * tree.py isn't terrible from a performance point of view, but it sure would
   be nice to have a C version. Same goes for timeline.py, for which I looked
   at using other python types like "decks", but eventually decided that being
-  able to add objects at arbitary times was just too useful a feature.
+  able to add objects at arbitary points in the timeline was just too useful
+  a feature.
 * You'll have to write your own behaviour module to do any meaningful
   comparisons. Understanding what's going on is a significant barrier to doing
   that, but reviewing the unit tests isn't a bad way to start.
-
-Or, to put it another way, it's still quite broken, but at least it runs.
 
 Contents:
 
